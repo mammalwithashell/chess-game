@@ -9,10 +9,9 @@ SCREEN_WIDTH = 512
 SCREEN_HEIGHT = 512
 SCREEN_TITLE = "Chess"
 
-SQUARE_SIZE = 64
+SQUARE_SIZE = SCREEN_WIDTH/8
 
 """
-TODO:
 Snap to place 
 Only allow possible moves for each piece
 Show possible moves when a piece is selected
