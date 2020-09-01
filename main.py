@@ -12,34 +12,29 @@ SCREEN_TITLE = "Chess"
 SQUARE_SIZE = SCREEN_WIDTH/8
 
 """
-Snap to place 
+TODO
+Snap to place
 Only allow possible moves for each piece
 Show possible moves when a piece is selected
 Implement castling
 """
 
 
-def draw_board():
-    """
-    :return: Draws a the black squares onto a white background to make a chess board
-    """
-    x, y = SQUARE_SIZE / 2, SQUARE_SIZE / 2
+# TODO Finish or delete Square class
 
-    for i in range(8):
-        for _ in range(8):
-            if i % 2 == 0:
-                arcade.draw_rectangle_filled(x, y, SQUARE_SIZE, SQUARE_SIZE, arcade.color.ONYX)
-            else:
-                arcade.draw_rectangle_filled(x - SQUARE_SIZE, y, SQUARE_SIZE, SQUARE_SIZE, arcade.color.ONYX)
-            x += SQUARE_SIZE * 2
-        y += SQUARE_SIZE
-        x = SQUARE_SIZE / 2
+
+class Square(arcade.Sprite):
+    def __init__(self, bw: str = "black", x: float = 0, y: float = 0):
+        """Square Constructor
+
+        Args:
+            bw (str, optional): Color of the square. Defaults to "black".
+        """
+        super().__init__(f"sprites/{bw}Square", 1, x, y)
 
 
 class Piece(arcade.Sprite):
-    """ Piece sprite """
-
-    def __init__(self, bw, value, scale):
+    def __init__(self, bw="white", value="Pawn", x: int = 0, y: int = 0,  scale=1):
         """ Piece Constructor """
 
         self.bw = bw
@@ -51,132 +46,57 @@ class Piece(arcade.Sprite):
 
 
 class MyGame(arcade.Window):
-    """ Main application class. """
-
     def __init__(self):
+        """Initial settings of the game
+        """
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-
+        # Set background color
         arcade.set_background_color(arcade.color.ANTIQUE_WHITE)
         self.turn = True
-        self.piece_in_hand = None
+        self.piece_in_hand: Piece()
         self.original_location = None
 
-        self.white_set = None
-        self.black_set = None
+        self.white_set = arcade.SpriteList()
+        self.black_set = arcade.SpriteList()
+        self.board_mats = arcade.SpriteList()
 
-        self.white_pawns = None
-        self.white_rook1 = None
-        self.white_rook2 = None
-        self.white_knight1 = None
-        self.white_knight2 = None
-        self.white_bishop1 = None
-        self.white_bishop2 = None
-        self.white_queen = None
-        self.white_king = None
-
-        self.black_pawns = None
-        self.black_rook1 = None
-        self.black_rook2 = None
-        self.black_knight1 = None
-        self.black_knight2 = None
-        self.black_bishop1 = None
-        self.black_bishop2 = None
-        self.black_queen = None
-        self.black_king = None
+    def draw_board(self):
+        """
+        :return: Creates board for snap to place feature
+        """
+        x, y = SQUARE_SIZE / 2, SQUARE_SIZE / 2
+        for _ in range(8):
+            x = SQUARE_SIZE/2
+            for i in range(8):
+                if i % 2 == 0:
+                    self.board_mats.append(Square("black", x, y))
+                else:
+                    self.board_mats.append(Square("white", x, y))
+                x += SQUARE_SIZE
+            y += SQUARE_SIZE
 
     def setup(self):
         """ Set up the game here. Call this function to restart the game. """
-        self.white_set = arcade.SpriteList()
-        self.black_set = arcade.SpriteList()
+        # Set up variables for pieces
+        half_square, stop = SQUARE_SIZE/2, 8*SQUARE_SIZE
+        x_list = [i for i in range(
+            int(half_square), int(stop), int(SQUARE_SIZE))]
+        y_list = [SQUARE_SIZE/2, SQUARE_SIZE * 1.5,
+                  SQUARE_SIZE * 6.5, SQUARE_SIZE * 7.5]
 
-        # White Pawns, create and append to sprite lists
-        self.white_pawns = [Piece("white", "Pawn", 1) for _ in range(8)]
-        [self.white_set.append(i) for i in self.white_pawns]
+        back_row = ["Rook", "Knight", "Bishop", "Queen",
+                    "King", "Bishop", "Knight", "Rook"]
+        # White Side
+        for x in x_list:
+            self.white_set.append(Piece("white", "Pawn", 1, x, y_list[0]))
+        for x, title in x_list, back_row:
+            self.white_set.append(Piece("white", title, x, y_list[1]))
 
-        # White Rooks, create and append to sprite lists
-        self.white_rook1, self.white_rook2 = [Piece("white", "Rook", 1) for _ in range(2)]
-        self.white_set.append(self.white_rook1)
-        self.white_set.append(self.white_rook2)
-        self.white_rook1.cstl_bool = True
-        self.white_rook2.cstl_bool = True
-
-        # White Bishops, create and append to sprite lists
-        self.white_bishop1, self.white_bishop2 = [Piece("white", "Bishop", 1) for _ in range(2)]
-        self.white_set.append(self.white_bishop1)
-        self.white_set.append(self.white_bishop2)
-
-        # White Knights, create and append to sprite lists
-        self.white_knight1, self.white_knight2 = [Piece("white", "Knight", 1) for _ in range(2)]
-        self.white_set.append(self.white_knight1)
-        self.white_set.append(self.white_knight2)
-
-        # White King & Queen
-        self.white_king = Piece("white", "King", 1)
-        self.white_queen = Piece("white", "Queen", 1)
-        self.white_set.append(self.white_king)
-        self.white_set.append(self.white_queen)
-        self.white_king.cstl_bool = True
-
-        # Assign all the positions
-        back_row = [self.white_rook1, self.white_knight1, self.white_bishop1, self.white_queen, self.white_king,
-                    self.white_bishop2, self.white_knight2, self.white_rook2]
-        x, y = SQUARE_SIZE / 2, SQUARE_SIZE / 2
-        for piece in back_row:
-            piece.position = x, y
-            x += SQUARE_SIZE
-        self.white_king.cstl_bool = False
-        self.white_rook1.cstl_bool = False
-        self.white_rook2.cstl_bool = False
-
-        x, y = SQUARE_SIZE / 2, (SQUARE_SIZE / 2 + SQUARE_SIZE)
-        for i in self.white_pawns:
-            i.center_x = x
-            i.center_y = y
-            x += SQUARE_SIZE
-
-        # -------------------- BLACK STARTS HERE --------------------
-        # Black Pawns
-        self.black_pawns = [Piece("black", "Pawn", 1) for _ in range(8)]
-        [self.black_set.append(i) for i in self.black_pawns]
-
-        # Black Rooks, create and append to sprite lists
-        self.black_rook1, self.black_rook2 = [Piece("black", "Rook", 1) for _ in range(2)]
-        self.black_set.append(self.black_rook1)
-        self.black_set.append(self.black_rook2)
-
-        # Black Bishops, create and append to sprite lists
-        self.black_bishop1, self.black_bishop2 = [Piece("black", "Bishop", 1) for _ in range(2)]
-        self.black_set.append(self.black_bishop1)
-        self.black_set.append(self.black_bishop2)
-
-        # Black Knights, create and append to sprite lists
-        self.black_knight1, self.black_knight2 = [Piece("black", "Knight", 1) for _ in range(2)]
-        self.black_set.append(self.black_knight1)
-        self.black_set.append(self.black_knight2)
-
-        # Black King & Queen
-        self.black_king = Piece("black", "King", 1)
-        self.black_queen = Piece("black", "Queen", 1)
-        self.black_set.append(self.black_king)
-        self.black_set.append(self.black_queen)
-
-        # Position back row of black pieces
-        back_row = [self.black_rook1, self.black_knight1, self.black_bishop1, self.black_queen, self.black_king,
-                    self.black_bishop2, self.black_knight2, self.black_rook2]
-        x, y = SQUARE_SIZE / 2, SQUARE_SIZE / 2 + 7 * SQUARE_SIZE
-        for piece in back_row:
-            piece.position = x, y
-            x += SQUARE_SIZE
-
-        self.black_king.cstl_bool = False
-        self.black_rook1.cstl_bool = False
-        self.black_rook2.cstl_bool = False
-
-        x, y = SQUARE_SIZE / 2, (SQUARE_SIZE / 2 + 6 * SQUARE_SIZE)
-        for i in self.black_pawns:
-            i.center_x = x
-            i.center_y = y
-            x += SQUARE_SIZE
+        # Black Side
+        for x in x_list:
+            self.black_set.append(Piece("black", "Pawn", 1, x, y_list[2]))
+        for x, title in x_list, back_row:
+            self.black_set.append(Piece("black", title, x, y_list[4]))
 
     def on_draw(self):
         """ Render the screen. """
@@ -199,35 +119,28 @@ class MyGame(arcade.Window):
 
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
         """ User moves mouse """
-        self.piece_in_hand.center_x += dx
-        self.piece_in_hand.center_y += dy
+        if type(self.piece_in_hand) is not None:
+            self.piece_in_hand.center_x += dx
+            self.piece_in_hand.center_y += dy
 
-    def on_mouse_release(self, x: float, y: float, button: int,
-                         modifiers: int):
+    def on_mouse_release(self, x: float, y: float, button: int, modifiers: int):
         """ Called when the user presses a mouse button. """
         # arcade.get_sprites_at_point() returns a python list of sprites at the cursors location
-        # who's turn is it
+        # whos turn is it
         if self.turn:
-            cur = arcade.get_sprites_at_point((x, y), self.black_set)
+            piece = arcade.get_sprites_at_point((x, y), self.black_set)
         else:
-            cur = arcade.get_sprites_at_point((x, y), self.white_set)
+            piece = arcade.get_sprites_at_point((x, y), self.white_set)
 
+        # if there is no sprite at my mouse location
+        if len(piece) is 0:
+            return
         # if there is a sprite at my mouse location
-        if len(cur) > 0:
-            # If piece at current position is a dif color then kill it
-            if cur[0].bw != self.piece_in_hand.bw:
-                cur[0].kill()
+        elif len(piece) is 1:
 
-            """elif cur[0].value == "Rook" and self.piece_in_hand.value == "King" and self.piece_in_hand.cstl_bool is True:
-                if cur[0].position[0] < self.piece_in_hand.position[0]:  # Left castle
-                    # Position rook and then king
-                    cur[0].center_x = self.piece_in_hand + 3 * SQUARE_SIZE
-                    self.piece_in_hand.center_x -= 2 * SQUARE_SIZE
-                else:  # Right castle white
-                    cur[0].center_x = self.piece_in_hand.center_x + SQUARE_SIZE
-                    self.piece_in_hand.center_x += SQUARE_SIZE * 2
-            else:
-                self.piece_in_hand.position = self.original_location"""
+            # If piece at current position is a dif color then kill it
+            if piece[0].bw != self.piece_in_hand.bw:
+                piece[0].kill()
 
         if self.piece_in_hand is not None:
             self.turn = not self.turn
@@ -237,6 +150,7 @@ class MyGame(arcade.Window):
 def main():
     """ Main method """
     window = MyGame()
+    window.draw_board()
     window.setup()
     arcade.run()
 
