@@ -6,3 +6,6 @@ chess/pyvenv.cfg
 .vscode/launch.json
 chess_workspace.code-workspace
 .vscode/settings.json
+env/*
+.vscode/settings.json
+chess/pyvenv.cfg
